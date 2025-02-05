@@ -7,7 +7,8 @@ export interface PredictionData {
     history?: IMessage[];
     uploads?: IFileUpload[];
     leadEmail?: string
-    action?: IAction
+    action?: IAction;
+    showAgentMessages?: boolean;
 }
 
 interface IAction {
@@ -66,7 +67,7 @@ export default class FlowiseClient {
     async createPrediction<T extends PredictionData>(
         data: T
     ): Promise<PredictionResponse<T>> {
-        const { chatflowId, streaming } = data;
+        const { chatflowId, streaming, showAgentMessages } = data;  // Destructure showAgentMessages
 
         // Check if chatflow is available to stream
         const chatFlowStreamingUrl = `${this.baseUrl}/api/v1/chatflows-streaming/${chatflowId}`;
@@ -83,12 +84,18 @@ export default class FlowiseClient {
 
         const predictionUrl = `${this.baseUrl}/api/v1/prediction/${chatflowId}`;
 
+        // Include showAgentMessages in the body of the request
+        const predictionData = {
+          ...data,
+          showAgentMessages: showAgentMessages === undefined ? true : showAgentMessages // Default to true if not specified. Prevents undefined being sent
+        }
+
         const options: any = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify(predictionData), // Use the modified data
         };
         if (this.apiKey) {
             options.headers['Authorization'] = `Bearer ${this.apiKey}`;
